@@ -17,4 +17,4 @@ WORKDIR /app
 COPY --from=builder /app /app
 
 EXPOSE 3000
-CMD ["npm", "run", "dev"]
+CMD ["node", "src/index.js"]
