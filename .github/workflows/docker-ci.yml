@@ -11,6 +11,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -22,14 +23,15 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Build Docker image
-        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/todo-app:latest .
+        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/application:latest .
 
       - name: Push Docker image
-        run: docker push ${{ secrets.DOCKER_USERNAME }}/todo-app:latest
+        run: docker push ${{ secrets.DOCKER_USERNAME }}/application:latest
 
   test:
     needs: build
     runs-on: ubuntu-latest
+
     steps:
       - name: Log in to Docker Hub
         uses: docker/login-action@v2
@@ -46,26 +48,25 @@ jobs:
             -e MYSQL_ROOT_PASSWORD=example \
             -e MYSQL_DATABASE=tododb \
             mysql:8.0
-          # wait for mysql ready
+
           for i in $(seq 1 30); do
             docker exec test-mysql mysqladmin ping -pexample >/dev/null 2>&1 && echo "MySQL ready" && break
             echo "Waiting for MySQL..."
             sleep 1
           done
 
-      - name: Run app container with DB
+      - name: Run application container with DB
         run: |
-          docker pull ${{ secrets.DOCKER_USERNAME }}/todo-app:latest
-          docker run -d --name todo-app-test --network test-net \
+          docker pull ${{ secrets.DOCKER_USERNAME }}/application:latest
+          docker run -d --name application-test --network test-net \
             -e MYSQL_HOST=test-mysql \
             -e MYSQL_USER=root \
             -e MYSQL_PASSWORD=example \
             -e MYSQL_DB=tododb \
-            ${{ secrets.DOCKER_USERNAME }}/todo-app:latest
+            ${{ secrets.DOCKER_USERNAME }}/application:latest
 
-      - name: Check app is running
+      - name: Check application is running
         run: |
-          # Wait a bit and check logs instead of curl to avoid network issues
           sleep 10
-          docker logs todo-app-test --tail 50
-          docker ps | grep todo-app-test || exit 1
+          docker logs application-test --tail 50
+          docker ps | grep application-test || exit 1
